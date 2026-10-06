@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediPal - Smart Medication Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 text-white flex justify-between items-center shadow-lg">
+        <div class="text-2xl font-bold">MediPal</div>
+        <div>
+            <button onclick="showLogin()" class="bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded">Login</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="text-center py-20 px-4">
+        <h1 class="text-5xl font-extrabold text-blue-900 mb-4">Never Miss Your Medication Again.</h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Manage medicines, track adherence, monitor your health, and stay organized in one place.</p>
+        <button onclick="showRegister()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg">Get Started</button>
+    </header>
+
+    <!-- Features -->
+    <section class="max-w-6xl mx-auto py-12 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+        <div class="bg-white p-6 rounded-xl shadow-md text-center">
+            <div class="text-4xl mb-4">💊</div>
+            <h3 class="text-xl font-bold mb-2">Smart Reminders</h3>
+            <p class="text-gray-600">Get timely alerts so you never miss a dose.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md text-center">
+            <div class="text-4xl mb-4">📊</div>
+            <h3 class="text-xl font-bold mb-2">Medication Analytics</h3>
+            <p class="text-gray-600">Track your adherence visually over time.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md text-center">
+            <div class="text-4xl mb-4">📦</div>
+            <h3 class="text-xl font-bold mb-2">Stock Tracking</h3>
+            <p class="text-gray-600">Automatic low-stock and expiry warnings.</p>
+        </div>
+    </section>
+
+    <!-- Modals for Login/Register -->
+    <div id="authModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold">Login</h2>
+                <button onclick="hideModal()" class="text-gray-500 hover:text-black">&times;</button>
+            </div>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <input type="text" id="name" placeholder="Full Name (Register only)" class="hidden w-full p-2 mb-4 border rounded">
+                <input type="email" id="email" placeholder="Email Address" required class="w-full p-2 mb-4 border rounded">
+                <input type="password" id="password" placeholder="Password" required class="w-full p-2 mb-6 border rounded">
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded">Submit</button>
+            </form>
+            <p class="text-center mt-4 text-sm text-gray-500" id="toggleAuthText">
+                Don't have an account? <button onclick="toggleAuthMode()" class="text-blue-600 underline">Register</button>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = true;
+
+        function showLogin() {
+            isLogin = true;
+            document.getElementById('modalTitle').innerText = 'Login';
+            document.getElementById('name').classList.add('hidden');
+            document.getElementById('name').required = false;
+            document.getElementById('toggleAuthText').innerHTML = `Don't have an account? <button onclick="toggleAuthMode()" class="text-blue-600 underline">Register</button>`;
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function showRegister() {
+            isLogin = false;
+            document.getElementById('modalTitle').innerText = 'Register';
+            document.getElementById('name').classList.remove('hidden');
+            document.getElementById('name').required = true;
+            document.getElementById('toggleAuthText').innerHTML = `Already have an account? <button onclick="toggleAuthMode()" class="text-blue-600 underline">Login</button>`;
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function toggleAuthMode() {
+            isLogin ? showRegister() : showLogin();
+        }
+
+        function hideModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const endpoint = isLogin ? '/api/login' : '/api/register';
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            if (!isLogin) payload.name = document.getElementById('name').value;
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    if (isLogin) {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        window.location.href = '/app.html';
+                    } else {
+                        alert('Registration successful! Please login.');
+                        showLogin();
+                    }
+                } else {
+                    alert(data.error || 'Authentication failed');
+                }
+            } catch (err) {
+                alert('Server error: ' + err.message);
+            }
+        }
+        
+        // Redirect if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = '/app.html';
+        }
+    </script>
+</body>
+</html>
